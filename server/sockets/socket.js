@@ -1,3 +1,5 @@
+import User from "../models/User.js";
+
 let io;
 
 // userId -> Set(socketIds)
@@ -9,7 +11,7 @@ export const initializeSocket = (socketServer) => {
   io.on("connection", (socket) => {
     console.log("User Connected:", socket.id);
 
-    socket.on("register", (userId) => {
+    socket.on("register", async (userId) => {
       socket.userId = userId;
 
       if (!onlineUsers.has(userId)) {
@@ -18,6 +20,10 @@ export const initializeSocket = (socketServer) => {
 
       onlineUsers.get(userId).add(socket.id);
 
+      await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+      });
+
       io.emit("online_users", [...onlineUsers.keys()]);
     });
 
@@ -25,7 +31,9 @@ export const initializeSocket = (socketServer) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
 
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("typing", { senderId });
+        io.to(receiverSocketId).emit("typing", {
+          senderId,
+        });
       }
     });
 
@@ -33,11 +41,13 @@ export const initializeSocket = (socketServer) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
 
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("stop_typing", { senderId });
+        io.to(receiverSocketId).emit("stop_typing", {
+          senderId,
+        });
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       const userId = socket.userId;
 
       if (userId && onlineUsers.has(userId)) {
@@ -47,6 +57,11 @@ export const initializeSocket = (socketServer) => {
 
         if (sockets.size === 0) {
           onlineUsers.delete(userId);
+
+          await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen: new Date(),
+          });
         }
 
         io.emit("online_users", [...onlineUsers.keys()]);

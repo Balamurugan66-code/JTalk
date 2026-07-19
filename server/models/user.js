@@ -31,6 +31,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    lastSeen: {
+      type: Date,
+      default: null,
+    },
+
+    about: {
+      type: String,
+      default: "Hey there! I'm using JTalk.",
+      maxlength: 120,
+    },
   },
   {
     timestamps: true,

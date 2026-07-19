@@ -43,6 +43,10 @@ export const getConversations = async (req, res) => {
 
           isOnline: onlineUsers.includes(user._id.toString()),
 
+          lastSeen: user.lastSeen,
+
+          about: user.about,
+
           lastMessage: lastMessage
             ? lastMessage.deleted
               ? {
