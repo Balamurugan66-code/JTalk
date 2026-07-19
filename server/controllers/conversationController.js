@@ -32,6 +32,12 @@ export const getConversations = async (req, res) => {
           .sort({ createdAt: -1 })
           .populate("sender", "name");
 
+        const unreadCount = await Message.countDocuments({
+          sender: user._id,
+          receiver: currentUserId,
+          status: { $ne: "seen" },
+        });
+
         return {
           ...user.toObject(),
 
@@ -46,6 +52,8 @@ export const getConversations = async (req, res) => {
             : null,
 
           lastMessageTime: lastMessage?.createdAt || null,
+
+          unreadCount,
         };
       })
     );

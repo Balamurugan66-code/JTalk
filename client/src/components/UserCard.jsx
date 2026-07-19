@@ -27,7 +27,6 @@ export default function UserCard({
           : "hover:bg-gray-100 border-l-4 border-l-transparent"
       }`}
     >
-      {/* Avatar */}
       <div className="relative flex-shrink-0">
         <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
           {user.name.charAt(0).toUpperCase()}
@@ -41,19 +40,24 @@ export default function UserCard({
       </div>
 
       <div className="flex-1 min-w-0">
-
-        {/* Top Row */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-start gap-2">
           <h3 className="font-semibold truncate">
             {user.name}
           </h3>
 
-          <span className="text-xs text-gray-400 ml-2">
-            {formatTime(user.lastMessageTime)}
-          </span>
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <span className="text-xs text-gray-400">
+              {formatTime(user.lastMessageTime)}
+            </span>
+
+            {user.unreadCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1 rounded-full bg-green-500 text-white text-[11px] flex items-center justify-center font-semibold">
+                {user.unreadCount}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Bottom Row */}
         {isTyping ? (
           <p className="text-sm text-blue-600 italic truncate">
             Typing...
