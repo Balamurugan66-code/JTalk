@@ -1,6 +1,10 @@
 import UserCard from "./UserCard";
 
-export default function Sidebar({ users, onSelect }) {
+export default function Sidebar({
+  users,
+  selectedUser,
+  onSelect,
+}) {
   return (
     <div className="w-80 bg-white border-r border-gray-300 flex flex-col">
       <div className="p-5 shadow-sm">
@@ -14,6 +18,7 @@ export default function Sidebar({ users, onSelect }) {
           <UserCard
             key={user._id}
             user={user}
+            isSelected={selectedUser?._id === user._id}
             onSelect={onSelect}
           />
         ))}

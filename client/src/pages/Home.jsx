@@ -42,9 +42,10 @@ export default function Home() {
   return (
     <div className="h-screen flex bg-gray-100">
       <Sidebar
-        users={users}
-        onSelect={setSelectedUser}
-      />
+  users={users}
+  selectedUser={selectedUser}
+  onSelect={setSelectedUser}
+/>
 
       <ChatWindow
         user={selectedUser}

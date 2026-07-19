@@ -1,8 +1,44 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { sendMessage } from "../services/messageService";
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function MessageInput({ selectedUser, onMessageSent }) {
   const [text, setText] = useState("");
+
+  const { socket } = useSocket();
+  const { user } = useAuth();
+
+  const typingRef = useRef(false);
+  const timeoutRef = useRef(null);
+
+  const handleTyping = (value) => {
+    setText(value);
+
+    if (!selectedUser) return;
+
+    // Emit "typing" only once
+    if (!typingRef.current) {
+      typingRef.current = true;
+
+      socket.emit("typing", {
+        senderId: user.id,
+        receiverId: selectedUser._id,
+      });
+    }
+
+    // Reset timer
+    clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      typingRef.current = false;
+
+      socket.emit("stop_typing", {
+        senderId: user.id,
+        receiverId: selectedUser._id,
+      });
+    }, 1000);
+  };
 
   const handleSend = async () => {
     if (!text.trim()) return;
@@ -12,6 +48,15 @@ export default function MessageInput({ selectedUser, onMessageSent }) {
 
     onMessageSent(message);
 
+    clearTimeout(timeoutRef.current);
+
+    typingRef.current = false;
+
+    socket.emit("stop_typing", {
+      senderId: user.id,
+      receiverId: selectedUser._id,
+    });
+
     setText("");
   };
 
@@ -19,7 +64,7 @@ export default function MessageInput({ selectedUser, onMessageSent }) {
     <div className="bg-white border-t border-gray-300 p-4 flex gap-3">
       <input
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => handleTyping(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSend();
         }}

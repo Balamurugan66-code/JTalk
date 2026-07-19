@@ -6,13 +6,17 @@ import MessageInput from "./MessageInput";
 
 import { getMessages } from "../services/messageService";
 import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function ChatWindow({ user }) {
   const [messages, setMessages] = useState([]);
 
-  const { socket } = useSocket();
+  const { socket, typingUsers } = useSocket();
+  const { user: currentUser } = useAuth();
 
-  // Listen for incoming socket messages
+  const isTyping = user ? !!typingUsers[user._id] : false;
+
+  // Listen for incoming messages
   useEffect(() => {
     socket.on("receive_message", (message) => {
       setMessages((prev) => [...prev, message]);
@@ -35,9 +39,14 @@ export default function ChatWindow({ user }) {
     loadChat();
   }, [user]);
 
-  // Add newly sent message to UI immediately
+  // Add newly sent message immediately
   const handleMessageSent = (message) => {
     setMessages((prev) => [...prev, message]);
+
+    socket.emit("stop_typing", {
+      senderId: currentUser.id,
+      receiverId: user._id,
+    });
   };
 
   if (!user) {
@@ -52,7 +61,10 @@ export default function ChatWindow({ user }) {
 
   return (
     <div className="flex-1 flex flex-col">
-      <ChatHeader user={user} />
+      <ChatHeader
+        user={user}
+        isTyping={isTyping}
+      />
 
       <MessageList messages={messages} />
 

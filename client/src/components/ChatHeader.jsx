@@ -1,4 +1,4 @@
-export default function ChatHeader({ user }) {
+export default function ChatHeader({ user, isTyping }) {
   return (
     <div className="h-20 bg-white border-b border-gray-300 flex items-center px-6 shadow-sm">
       <div className="relative">
@@ -16,13 +16,19 @@ export default function ChatHeader({ user }) {
       <div className="ml-4">
         <h2 className="font-semibold text-lg">{user.name}</h2>
 
-        <p
-          className={`text-sm font-medium ${
-            user.isOnline ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          {user.isOnline ? "Online" : "Offline"}
-        </p>
+        {isTyping ? (
+          <p className="text-sm text-blue-600 italic animate-pulse">
+            Typing...
+          </p>
+        ) : (
+          <p
+            className={`text-sm font-medium ${
+              user.isOnline ? "text-green-600" : "text-gray-500"
+            }`}
+          >
+            {user.isOnline ? "Online" : "Offline"}
+          </p>
+        )}
       </div>
     </div>
   );

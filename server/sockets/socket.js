@@ -21,6 +21,30 @@ export const initializeSocket = (socketServer) => {
       io.emit("online_users", [...onlineUsers.keys()]);
     });
 
+    // ------------------------
+    // Typing Indicator
+    // ------------------------
+
+    socket.on("typing", ({ senderId, receiverId }) => {
+      const receiverSocketId = getReceiverSocketId(receiverId);
+
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("typing", {
+          senderId,
+        });
+      }
+    });
+
+    socket.on("stop_typing", ({ senderId, receiverId }) => {
+      const receiverSocketId = getReceiverSocketId(receiverId);
+
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("stop_typing", {
+          senderId,
+        });
+      }
+    });
+
     socket.on("disconnect", () => {
       const userId = socket.userId;
 
