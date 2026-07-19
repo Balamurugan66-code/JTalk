@@ -5,17 +5,18 @@ export const sendMessage = async (req, res) => {
   try {
     const { receiver, text } = req.body;
 
+    const receiverSocketId = getReceiverSocketId(receiver);
+
     const message = await Message.create({
       sender: req.user.id,
       receiver,
       text,
+      status: receiverSocketId ? "delivered" : "sent",
     });
 
     const populatedMessage = await Message.findById(message._id)
       .populate("sender", "name email")
       .populate("receiver", "name email");
-
-    const receiverSocketId = getReceiverSocketId(receiver);
 
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("receive_message", populatedMessage);
@@ -33,6 +34,17 @@ export const getMessages = async (req, res) => {
   try {
     const { id } = req.params;
 
+    await Message.updateMany(
+      {
+        sender: id,
+        receiver: req.user.id,
+        status: { $ne: "seen" },
+      },
+      {
+        status: "seen",
+      }
+    );
+
     const messages = await Message.find({
       $or: [
         {
@@ -48,6 +60,14 @@ export const getMessages = async (req, res) => {
       .populate("sender", "name email")
       .populate("receiver", "name email")
       .sort({ createdAt: 1 });
+
+    const senderSocketId = getReceiverSocketId(id);
+
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messages_seen", {
+        viewer: req.user.id,
+      });
+    }
 
     res.json(messages);
   } catch (error) {

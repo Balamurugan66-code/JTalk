@@ -5,6 +5,23 @@ export default function MessageBubble({ message }) {
 
   const isMine = message.sender._id === user.id;
 
+  const getStatus = () => {
+    switch (message.status) {
+      case "seen":
+        return (
+          <span className="text-blue-300 font-semibold">
+            ✓✓
+          </span>
+        );
+
+      case "delivered":
+        return "✓✓";
+
+      default:
+        return "✓";
+    }
+  };
+
   return (
     <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
       <div
@@ -16,16 +33,20 @@ export default function MessageBubble({ message }) {
       >
         <p>{message.text}</p>
 
-        <p
-          className={`text-[10px] mt-1 ${
+        <div
+          className={`mt-1 flex items-center gap-1 text-[10px] ${
             isMine ? "text-blue-100" : "text-gray-500"
           }`}
         >
-          {new Date(message.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
+          <span>
+            {new Date(message.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+
+          {isMine && <span>{getStatus()}</span>}
+        </div>
       </div>
     </div>
   );

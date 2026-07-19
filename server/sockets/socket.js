@@ -21,17 +21,11 @@ export const initializeSocket = (socketServer) => {
       io.emit("online_users", [...onlineUsers.keys()]);
     });
 
-    // ------------------------
-    // Typing Indicator
-    // ------------------------
-
     socket.on("typing", ({ senderId, receiverId }) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
 
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("typing", {
-          senderId,
-        });
+        io.to(receiverSocketId).emit("typing", { senderId });
       }
     });
 
@@ -39,9 +33,7 @@ export const initializeSocket = (socketServer) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
 
       if (receiverSocketId) {
-        io.to(receiverSocketId).emit("stop_typing", {
-          senderId,
-        });
+        io.to(receiverSocketId).emit("stop_typing", { senderId });
       }
     });
 
@@ -73,8 +65,6 @@ export const getReceiverSocketId = (userId) => {
   return [...sockets][0];
 };
 
-export const getOnlineUsers = () => {
-  return [...onlineUsers.keys()];
-};
+export const getOnlineUsers = () => [...onlineUsers.keys()];
 
 export { io };

@@ -42,10 +42,24 @@ export default function ChatWindow({
       refreshConversations();
     };
 
+    const handleMessagesSeen = () => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.sender._id === currentUser.id
+            ? { ...msg, status: "seen" }
+            : msg
+        )
+      );
+
+      refreshConversations();
+    };
+
     socket.on("receive_message", handleReceiveMessage);
+    socket.on("messages_seen", handleMessagesSeen);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
+      socket.off("messages_seen", handleMessagesSeen);
     };
   }, [socket, user, currentUser, refreshConversations]);
 
