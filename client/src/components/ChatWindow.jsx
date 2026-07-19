@@ -13,6 +13,7 @@ export default function ChatWindow({
   refreshConversations,
 }) {
   const [messages, setMessages] = useState([]);
+  const [replyMessage, setReplyMessage] = useState(null);
 
   const { socket, typingUsers } = useSocket();
   const { user: currentUser } = useAuth();
@@ -77,6 +78,8 @@ export default function ChatWindow({
   const handleMessageSent = async (message) => {
     setMessages((prev) => [...prev, message]);
 
+    setReplyMessage(null);
+
     await refreshConversations();
 
     socket.emit("stop_typing", {
@@ -102,11 +105,16 @@ export default function ChatWindow({
         isTyping={isTyping}
       />
 
-      <MessageList messages={messages} />
+      <MessageList
+        messages={messages}
+        onReply={setReplyMessage}
+      />
 
       <MessageInput
         selectedUser={user}
         onMessageSent={handleMessageSent}
+        replyMessage={replyMessage}
+        onCancelReply={() => setReplyMessage(null)}
       />
     </div>
   );

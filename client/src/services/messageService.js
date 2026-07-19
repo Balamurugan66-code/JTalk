@@ -1,9 +1,10 @@
 import api from "./api";
 
-export const sendMessage = async (receiverId, text) => {
+export const sendMessage = async (receiverId, text, replyTo = null) => {
   const { data } = await api.post("/messages", {
     receiver: receiverId,
     text,
+    replyTo,
   });
 
   return data;

@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function MessageList({ messages }) {
+export default function MessageList({
+  messages,
+  onReply,
+}) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function MessageList({ messages }) {
         <MessageBubble
           key={message._id}
           message={message}
+          onReply={onReply}
         />
       ))}
 

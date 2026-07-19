@@ -3,7 +3,7 @@ import { io, getReceiverSocketId } from "../sockets/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { receiver, text } = req.body;
+    const { receiver, text, replyTo } = req.body;
 
     const receiverSocketId = getReceiverSocketId(receiver);
 
@@ -11,12 +11,20 @@ export const sendMessage = async (req, res) => {
       sender: req.user.id,
       receiver,
       text,
+      replyTo: replyTo || null,
       status: receiverSocketId ? "delivered" : "sent",
     });
 
     const populatedMessage = await Message.findById(message._id)
       .populate("sender", "name email")
-      .populate("receiver", "name email");
+      .populate("receiver", "name email")
+      .populate({
+        path: "replyTo",
+        populate: {
+          path: "sender",
+          select: "name",
+        },
+      });
 
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("receive_message", populatedMessage);
@@ -59,6 +67,13 @@ export const getMessages = async (req, res) => {
     })
       .populate("sender", "name email")
       .populate("receiver", "name email")
+      .populate({
+        path: "replyTo",
+        populate: {
+          path: "sender",
+          select: "name",
+        },
+      })
       .sort({ createdAt: 1 });
 
     const senderSocketId = getReceiverSocketId(id);

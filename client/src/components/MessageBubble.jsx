@@ -1,6 +1,9 @@
 import { useAuth } from "../context/AuthContext";
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({
+  message,
+  onReply,
+}) {
   const { user } = useAuth();
 
   const isMine = message.sender._id === user.id;
@@ -23,14 +26,37 @@ export default function MessageBubble({ message }) {
   };
 
   return (
-    <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+    <div
+      className={`flex ${
+        isMine ? "justify-end" : "justify-start"
+      }`}
+    >
       <div
-        className={`max-w-[70%] px-4 py-2 rounded-2xl shadow ${
+        onDoubleClick={() => onReply(message)}
+        className={`max-w-[70%] px-4 py-2 rounded-2xl shadow cursor-pointer ${
           isMine
             ? "bg-blue-600 text-white rounded-br-md"
             : "bg-white text-gray-900 rounded-bl-md"
         }`}
       >
+        {message.replyTo && (
+          <div
+            className={`mb-2 border-l-4 pl-2 rounded ${
+              isMine
+                ? "border-blue-200 bg-blue-500"
+                : "border-blue-500 bg-gray-100"
+            }`}
+          >
+            <p className="text-xs font-semibold">
+              {message.replyTo.sender.name}
+            </p>
+
+            <p className="text-xs truncate">
+              {message.replyTo.text}
+            </p>
+          </div>
+        )}
+
         <p>{message.text}</p>
 
         <div
