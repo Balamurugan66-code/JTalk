@@ -37,3 +37,15 @@ export const deleteMessage = async (messageId) => {
   const { data } = await api.delete(`/messages/${messageId}`);
   return data;
 };
+
+export const reactToMessage = async (
+  messageId,
+  emoji
+) => {
+  const { data } = await api.post(
+    `/messages/${messageId}/react`,
+    { emoji }
+  );
+
+  return data;
+};

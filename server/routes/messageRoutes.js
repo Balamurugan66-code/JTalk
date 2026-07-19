@@ -3,6 +3,7 @@ import {
   sendMessage,
   getMessages,
   deleteMessage,
+  reactToMessage,
 } from "../controllers/messageController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { upload } from "../config/cloudinary.js";
@@ -22,6 +23,12 @@ router.delete(
   "/:id",
   authMiddleware,
   deleteMessage
+);
+
+router.post(
+  "/:id/react",
+  authMiddleware,
+  reactToMessage
 );
 
 export default router;

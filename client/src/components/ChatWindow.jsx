@@ -34,8 +34,10 @@ export default function ChatWindow({
 
       if (
         user &&
-        ((senderId === user._id && receiverId === currentUser.id) ||
-          (senderId === currentUser.id && receiverId === user._id))
+        ((senderId === user._id &&
+          receiverId === currentUser.id) ||
+          (senderId === currentUser.id &&
+            receiverId === user._id))
       ) {
         setMessages((prev) => [...prev, message]);
       }
@@ -72,14 +74,26 @@ export default function ChatWindow({
       refreshConversations();
     };
 
+    const handleMessageReacted = (updatedMessage) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === updatedMessage._id
+            ? updatedMessage
+            : msg
+        )
+      );
+    };
+
     socket.on("receive_message", handleReceiveMessage);
     socket.on("messages_seen", handleMessagesSeen);
     socket.on("message_deleted", handleMessageDeleted);
+    socket.on("message_reacted", handleMessageReacted);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_seen", handleMessagesSeen);
       socket.off("message_deleted", handleMessageDeleted);
+      socket.off("message_reacted", handleMessageReacted);
     };
   }, [socket, user, currentUser, refreshConversations]);
 
