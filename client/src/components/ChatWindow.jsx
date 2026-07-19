@@ -8,7 +8,10 @@ import { getMessages } from "../services/messageService";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 
-export default function ChatWindow({ user }) {
+export default function ChatWindow({
+  user,
+  refreshConversations,
+}) {
   const [messages, setMessages] = useState([]);
 
   const { socket, typingUsers } = useSocket();
@@ -16,18 +19,36 @@ export default function ChatWindow({ user }) {
 
   const isTyping = user ? !!typingUsers[user._id] : false;
 
-  // Listen for incoming messages
   useEffect(() => {
-    socket.on("receive_message", (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
+    const handleReceiveMessage = (message) => {
+      const senderId =
+        typeof message.sender === "object"
+          ? message.sender._id
+          : message.sender;
+
+      const receiverId =
+        typeof message.receiver === "object"
+          ? message.receiver._id
+          : message.receiver;
+
+      if (
+        user &&
+        ((senderId === user._id && receiverId === currentUser.id) ||
+          (senderId === currentUser.id && receiverId === user._id))
+      ) {
+        setMessages((prev) => [...prev, message]);
+      }
+
+      refreshConversations();
+    };
+
+    socket.on("receive_message", handleReceiveMessage);
 
     return () => {
-      socket.off("receive_message");
+      socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket]);
+  }, [socket, user, currentUser, refreshConversations]);
 
-  // Load chat history whenever a different user is selected
   useEffect(() => {
     if (!user) return;
 
@@ -39,9 +60,10 @@ export default function ChatWindow({ user }) {
     loadChat();
   }, [user]);
 
-  // Add newly sent message immediately
-  const handleMessageSent = (message) => {
+  const handleMessageSent = async (message) => {
     setMessages((prev) => [...prev, message]);
+
+    await refreshConversations();
 
     socket.emit("stop_typing", {
       senderId: currentUser.id,

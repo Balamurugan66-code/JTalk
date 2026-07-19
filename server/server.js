@@ -9,6 +9,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import { initializeSocket } from "./sockets/socket.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -36,6 +37,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/conversations", conversationRoutes);
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
