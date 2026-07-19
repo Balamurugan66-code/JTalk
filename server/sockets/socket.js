@@ -1,6 +1,7 @@
 let io;
 
-const userSocketMap = {};
+// userId -> Set(socketIds)
+const onlineUsers = new Map();
 
 export const initializeSocket = (socketServer) => {
   io = socketServer;
@@ -9,15 +10,30 @@ export const initializeSocket = (socketServer) => {
     console.log("User Connected:", socket.id);
 
     socket.on("register", (userId) => {
-      userSocketMap[userId] = socket.id;
+      socket.userId = userId;
+
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+      }
+
+      onlineUsers.get(userId).add(socket.id);
+
+      io.emit("online_users", [...onlineUsers.keys()]);
     });
 
     socket.on("disconnect", () => {
-      for (const userId in userSocketMap) {
-        if (userSocketMap[userId] === socket.id) {
-          delete userSocketMap[userId];
-          break;
+      const userId = socket.userId;
+
+      if (userId && onlineUsers.has(userId)) {
+        const sockets = onlineUsers.get(userId);
+
+        sockets.delete(socket.id);
+
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
         }
+
+        io.emit("online_users", [...onlineUsers.keys()]);
       }
 
       console.log("User Disconnected:", socket.id);
@@ -26,7 +42,15 @@ export const initializeSocket = (socketServer) => {
 };
 
 export const getReceiverSocketId = (userId) => {
-  return userSocketMap[userId];
+  const sockets = onlineUsers.get(userId);
+
+  if (!sockets || sockets.size === 0) return null;
+
+  return [...sockets][0];
+};
+
+export const getOnlineUsers = () => {
+  return [...onlineUsers.keys()];
 };
 
 export { io };
