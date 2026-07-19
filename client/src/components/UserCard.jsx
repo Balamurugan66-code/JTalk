@@ -18,6 +18,28 @@ export default function UserCard({
     });
   };
 
+  const getLastMessagePreview = () => {
+    if (!user.lastMessage) {
+      return "No messages yet";
+    }
+
+    const isPhoto =
+      typeof user.lastMessage === "object" &&
+      user.lastMessage.image;
+
+    if (isPhoto) {
+      if (user.lastMessage.text?.trim()) {
+        return `📷 Photo • ${user.lastMessage.text}`;
+      }
+
+      return "📷 Photo";
+    }
+
+    return typeof user.lastMessage === "object"
+      ? user.lastMessage.text
+      : user.lastMessage;
+  };
+
   return (
     <div
       onClick={() => onSelect(user)}
@@ -64,9 +86,8 @@ export default function UserCard({
           </p>
         ) : (
           <p className="text-sm text-gray-500 truncate">
-            {user.lastMessage
-              ? `${user.lastMessageSender === "me" ? "You: " : ""}${user.lastMessage}`
-              : "No messages yet"}
+            {user.lastMessageSender === "me" ? "You: " : ""}
+            {getLastMessagePreview()}
           </p>
         )}
       </div>

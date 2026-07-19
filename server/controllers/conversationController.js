@@ -43,7 +43,17 @@ export const getConversations = async (req, res) => {
 
           isOnline: onlineUsers.includes(user._id.toString()),
 
-          lastMessage: lastMessage?.text || "",
+          lastMessage: lastMessage
+            ? lastMessage.deleted
+              ? {
+                  text: "🚫 This message was deleted",
+                  image: "",
+                }
+              : {
+                  text: lastMessage.text,
+                  image: lastMessage.image,
+                }
+            : null,
 
           lastMessageSender: lastMessage
             ? lastMessage.sender._id.toString() === currentUserId

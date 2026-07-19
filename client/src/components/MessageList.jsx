@@ -1,17 +1,36 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 
 export default function MessageList({
   messages,
   onReply,
 }) {
+  const containerRef = useRef(null);
   const bottomRef = useRef(null);
 
+  const [isNearBottom, setIsNearBottom] = useState(true);
+
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const threshold = 100;
+
+    const distanceFromBottom =
+      container.scrollHeight -
+      container.scrollTop -
+      container.clientHeight;
+
+    setIsNearBottom(distanceFromBottom < threshold);
+  };
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [messages]);
+    if (isNearBottom) {
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [messages, isNearBottom]);
 
   if (messages.length === 0) {
     return (
@@ -24,7 +43,11 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-100 p-6 space-y-3">
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="flex-1 overflow-y-auto bg-gray-100 p-6 space-y-3"
+    >
       {messages.map((message) => (
         <MessageBubble
           key={message._id}

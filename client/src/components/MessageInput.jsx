@@ -10,6 +10,9 @@ export default function MessageInput({
   onCancelReply,
 }) {
   const [text, setText] = useState("");
+  const [image, setImage] = useState(null);
+
+  const fileInputRef = useRef(null);
 
   const { socket } = useSocket();
   const { user } = useAuth();
@@ -44,13 +47,14 @@ export default function MessageInput({
   };
 
   const handleSend = async () => {
-    if (!text.trim()) return;
     if (!selectedUser) return;
+    if (!text.trim() && !image) return;
 
     const message = await sendMessage(
       selectedUser._id,
       text,
-      replyMessage?._id
+      replyMessage?._id,
+      image
     );
 
     onMessageSent(message);
@@ -65,6 +69,11 @@ export default function MessageInput({
     });
 
     setText("");
+    setImage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
 
     if (onCancelReply) {
       onCancelReply();
@@ -94,21 +103,49 @@ export default function MessageInput({
         </div>
       )}
 
-      <div className="p-4 flex gap-3">
+      {image && (
+        <div className="px-4 pt-3">
+          <img
+            src={URL.createObjectURL(image)}
+            alt="Preview"
+            className="w-28 h-28 object-cover rounded-lg border"
+          />
+        </div>
+      )}
+
+      <div className="p-4 flex items-center gap-3">
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className="text-2xl"
+        >
+          📷
+        </button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            if (e.target.files.length > 0) {
+              setImage(e.target.files[0]);
+            }
+          }}
+        />
+
         <input
           value={text}
           onChange={(e) => handleTyping(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") handleSend();
           }}
-          type="text"
           placeholder="Type a message..."
           className="flex-1 border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <button
           onClick={handleSend}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-lg transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
         >
           Send
         </button>

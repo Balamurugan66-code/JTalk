@@ -55,12 +55,31 @@ export default function ChatWindow({
       refreshConversations();
     };
 
+    const handleMessageDeleted = (messageId) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? {
+                ...msg,
+                deleted: true,
+                text: "",
+                image: "",
+              }
+            : msg
+        )
+      );
+
+      refreshConversations();
+    };
+
     socket.on("receive_message", handleReceiveMessage);
     socket.on("messages_seen", handleMessagesSeen);
+    socket.on("message_deleted", handleMessageDeleted);
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
       socket.off("messages_seen", handleMessagesSeen);
+      socket.off("message_deleted", handleMessageDeleted);
     };
   }, [socket, user, currentUser, refreshConversations]);
 

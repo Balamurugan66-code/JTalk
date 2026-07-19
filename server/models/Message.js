@@ -16,8 +16,13 @@ const messageSchema = new mongoose.Schema(
 
     text: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+    },
+
+    image: {
+      type: String,
+      default: "",
     },
 
     replyTo: {
@@ -30,6 +35,22 @@ const messageSchema = new mongoose.Schema(
       type: String,
       enum: ["sent", "delivered", "seen"],
       default: "sent",
+    },
+
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {
