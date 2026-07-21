@@ -12,13 +12,19 @@ export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password)
-      return res.status(400).json({ message: "All fields are required." });
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "All fields are required." });
+    }
 
     const userExists = await User.findOne({ email });
 
-    if (userExists)
-      return res.status(400).json({ message: "User already exists." });
+    if (userExists) {
+      return res
+        .status(400)
+        .json({ message: "User already exists." });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -35,10 +41,14 @@ export const register = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
+        about: user.about,
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -48,13 +58,22 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (!user)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "Invalid credentials" });
+    }
 
-    const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(
+      password,
+      user.password
+    );
 
-    if (!match)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!match) {
+      return res
+        .status(401)
+        .json({ message: "Invalid credentials" });
+    }
 
     res.status(200).json({
       message: "Login successful",
@@ -63,9 +82,13 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
+        about: user.about,
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
@@ -11,16 +11,30 @@ import { useAuth } from "../context/AuthContext";
 export default function ChatWindow({
   user,
   refreshConversations,
+  setSelectedConversation,
 }) {
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
 
-  const { socket, typingUsers } = useSocket();
+  const { socket, typingUsers, onlineUsers } = useSocket();
   const { user: currentUser } = useAuth();
 
-  const isTyping = user ? !!typingUsers[user._id] : false;
+  const liveUser = useMemo(() => {
+    if (!user) return null;
+
+    return {
+      ...user,
+      isOnline: onlineUsers.includes(user._id),
+    };
+  }, [user, onlineUsers]);
+
+  const isTyping = liveUser
+    ? !!typingUsers[liveUser._id]
+    : false;
 
   useEffect(() => {
+    if (!liveUser || !currentUser) return;
+
     const handleReceiveMessage = (message) => {
       const senderId =
         typeof message.sender === "object"
@@ -33,11 +47,10 @@ export default function ChatWindow({
           : message.receiver;
 
       if (
-        user &&
-        ((senderId === user._id &&
+        (senderId === liveUser._id &&
           receiverId === currentUser.id) ||
-          (senderId === currentUser.id &&
-            receiverId === user._id))
+        (senderId === currentUser.id &&
+          receiverId === liveUser._id)
       ) {
         setMessages((prev) => [...prev, message]);
       }
@@ -95,18 +108,44 @@ export default function ChatWindow({
       socket.off("message_deleted", handleMessageDeleted);
       socket.off("message_reacted", handleMessageReacted);
     };
-  }, [socket, user, currentUser, refreshConversations]);
+  }, [
+    socket,
+    liveUser?._id,
+    currentUser?.id,
+    refreshConversations,
+  ]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!liveUser) return;
 
     async function loadChat() {
-      const msgs = await getMessages(user._id);
-      setMessages(msgs);
+      try {
+        const msgs = await getMessages(liveUser._id);
+        setMessages(msgs);
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     loadChat();
-  }, [user]);
+  }, [liveUser?._id]);
+
+  useEffect(() => {
+    if (!liveUser) return;
+
+    setSelectedConversation((prev) =>
+      prev
+        ? {
+            ...prev,
+            isOnline: onlineUsers.includes(prev._id),
+          }
+        : prev
+    );
+  }, [
+    onlineUsers,
+    liveUser?._id,
+    setSelectedConversation,
+  ]);
 
   const handleMessageSent = async (message) => {
     setMessages((prev) => [...prev, message]);
@@ -117,11 +156,11 @@ export default function ChatWindow({
 
     socket.emit("stop_typing", {
       senderId: currentUser.id,
-      receiverId: user._id,
+      receiverId: liveUser._id,
     });
   };
 
-  if (!user) {
+  if (!liveUser) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-100">
         <h2 className="text-2xl text-gray-500">
@@ -134,7 +173,7 @@ export default function ChatWindow({
   return (
     <div className="flex-1 flex flex-col">
       <ChatHeader
-        user={user}
+        user={liveUser}
         isTyping={isTyping}
       />
 
@@ -144,7 +183,7 @@ export default function ChatWindow({
       />
 
       <MessageInput
-        selectedUser={user}
+        selectedUser={liveUser}
         onMessageSent={handleMessageSent}
         replyMessage={replyMessage}
         onCancelReply={() => setReplyMessage(null)}

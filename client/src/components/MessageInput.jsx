@@ -47,6 +47,11 @@ export default function MessageInput({
   };
 
   const handleSend = async () => {
+    console.log("Sending", {
+  senderId: user?.id,
+  sender_Id: user?._id,
+  receiverId: selectedUser?._id,
+});
     if (!selectedUser) return;
     if (!text.trim() && !image) return;
 

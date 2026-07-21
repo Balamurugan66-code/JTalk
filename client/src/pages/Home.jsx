@@ -12,27 +12,48 @@ export default function Home() {
   const { onlineUsers } = useSocket();
 
   const loadConversations = useCallback(async () => {
-    const data = await getConversations();
+    try {
+      const data = await getConversations();
 
-    const updated = data.map((conversation) => ({
-      ...conversation,
-      isOnline: onlineUsers.includes(conversation._id),
-    }));
+      const updated = data.map((conversation) => ({
+        ...conversation,
+        isOnline: onlineUsers.includes(conversation._id),
+      }));
 
-    setConversations(updated);
+      setConversations(updated);
 
-    setSelectedConversation((prev) => {
-      if (!prev) return null;
+      setSelectedConversation((prev) => {
+        if (!prev) return null;
 
-      return (
-        updated.find((conversation) => conversation._id === prev._id) || null
-      );
-    });
+        return (
+          updated.find(
+            (conversation) => conversation._id === prev._id
+          ) || null
+        );
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }, [onlineUsers]);
 
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+
+  useEffect(() => {
+    if (!selectedConversation) return;
+
+    setConversations((prev) =>
+      prev.map((conversation) =>
+        conversation._id === selectedConversation._id
+          ? {
+              ...conversation,
+              unreadCount: 0,
+            }
+          : conversation
+      )
+    );
+  }, [selectedConversation]);
 
   return (
     <div className="h-screen flex bg-gray-100">
@@ -45,6 +66,7 @@ export default function Home() {
       <ChatWindow
         user={selectedConversation}
         refreshConversations={loadConversations}
+        setSelectedConversation={setSelectedConversation}
       />
     </div>
   );

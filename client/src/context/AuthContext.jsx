@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import api from "../services/api";
 
 const AuthContext = createContext();
 
@@ -6,18 +12,34 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    async function loadUser() {
+      const token = localStorage.getItem("token");
 
-    if (!token) return;
+      if (!token) return;
 
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setUser(payload);
-    } catch (err) {
-      console.error("Invalid token", err);
-      localStorage.removeItem("token");
+      try {
+        const res = await api.get("/users/profile");
+
+        setUser({
+          id: res.data._id,
+          ...res.data,
+        });
+      } catch (err) {
+        console.error(err);
+        localStorage.removeItem("token");
+      }
     }
+
+    loadUser();
   }, []);
+
+  const updateUser = (updates) => {
+    setUser((prev) => ({
+      ...prev,
+      ...updates,
+      id: updates.id || prev.id,
+    }));
+  };
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -30,6 +52,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         setUser,
+        updateUser,
         logout,
       }}
     >

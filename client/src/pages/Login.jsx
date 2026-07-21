@@ -1,7 +1,10 @@
 import { useState } from "react";
 import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
+  const { setUser } = useAuth();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -22,12 +25,16 @@ export default function Login() {
 
       localStorage.setItem("token", res.data.token);
 
-      window.location.href = "/home";
+      setUser(res.data.user);
 
       alert("Login Successful");
-      console.log(res.data);
+
+      window.location.href = "/home";
     } catch (err) {
-      alert(err.response?.data?.message || "Login Failed");
+      alert(
+        err.response?.data?.message ||
+          "Login Failed"
+      );
     }
   };
 
@@ -43,7 +50,8 @@ export default function Login() {
           onChange={handleChange}
         />
 
-        <br /><br />
+        <br />
+        <br />
 
         <input
           type="password"
@@ -52,9 +60,12 @@ export default function Login() {
           onChange={handleChange}
         />
 
-        <br /><br />
+        <br />
+        <br />
 
-        <button type="submit">Login</button>
+        <button type="submit">
+          Login
+        </button>
       </form>
     </div>
   );
