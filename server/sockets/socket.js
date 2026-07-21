@@ -27,6 +27,10 @@ export const initializeSocket = (socketServer) => {
       io.emit("online_users", [...onlineUsers.keys()]);
     });
 
+    // ===========================
+    // Direct Chat Typing
+    // ===========================
+
     socket.on("typing", ({ senderId, receiverId }) => {
       const receiverSocketId = getReceiverSocketId(receiverId);
 
@@ -46,6 +50,36 @@ export const initializeSocket = (socketServer) => {
         });
       }
     });
+
+    // ===========================
+    // Group Rooms
+    // ===========================
+
+    socket.on("join_group", (groupId) => {
+      socket.join(groupId);
+      console.log(`${socket.id} joined group ${groupId}`);
+    });
+
+    socket.on("leave_group", (groupId) => {
+      socket.leave(groupId);
+      console.log(`${socket.id} left group ${groupId}`);
+    });
+
+    socket.on("send_group_message", ({ groupId, message }) => {
+      io.to(groupId).emit("receive_group_message", message);
+    });
+
+    socket.on("typing_group", ({ groupId, sender }) => {
+      socket.to(groupId).emit("typing_group", sender);
+    });
+
+    socket.on("stop_typing_group", ({ groupId }) => {
+      socket.to(groupId).emit("stop_typing_group");
+    });
+
+    // ===========================
+    // Disconnect
+    // ===========================
 
     socket.on("disconnect", async () => {
       const userId = socket.userId;

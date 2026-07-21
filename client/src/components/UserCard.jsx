@@ -7,7 +7,8 @@ export default function UserCard({
 }) {
   const { typingUsers } = useSocket();
 
-  const isTyping = !!typingUsers[user._id];
+  const isGroup = user.type === "group";
+  const isTyping = !isGroup && !!typingUsers[user._id];
 
   const formatTime = (date) => {
     if (!date) return "";
@@ -20,7 +21,9 @@ export default function UserCard({
 
   const getLastMessagePreview = () => {
     if (!user.lastMessage) {
-      return "No messages yet";
+      return isGroup
+        ? "Group created"
+        : "No messages yet";
     }
 
     const isPhoto =
@@ -50,7 +53,11 @@ export default function UserCard({
       }`}
     >
       <div className="relative flex-shrink-0">
-        {user.avatar ? (
+        {isGroup ? (
+          <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white text-xl">
+            👥
+          </div>
+        ) : user.avatar ? (
           <img
             src={user.avatar}
             alt={user.name}
@@ -62,18 +69,30 @@ export default function UserCard({
           </div>
         )}
 
-        <span
-          className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
-            user.isOnline ? "bg-green-500" : "bg-gray-400"
-          }`}
-        />
+        {!isGroup && (
+          <span
+            className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
+              user.isOnline
+                ? "bg-green-500"
+                : "bg-gray-400"
+            }`}
+          />
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-semibold truncate">
-            {user.name}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate">
+              {user.name}
+            </h3>
+
+            {isGroup && (
+              <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                GROUP
+              </span>
+            )}
+          </div>
 
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
             <span className="text-xs text-gray-400">
@@ -94,7 +113,10 @@ export default function UserCard({
           </p>
         ) : (
           <p className="text-sm text-gray-500 truncate">
-            {user.lastMessageSender === "me" ? "You: " : ""}
+            {!isGroup &&
+            user.lastMessageSender === "me"
+              ? "You: "
+              : ""}
             {getLastMessagePreview()}
           </p>
         )}

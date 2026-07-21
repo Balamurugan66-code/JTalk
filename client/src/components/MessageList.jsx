@@ -4,6 +4,7 @@ import MessageBubble from "./MessageBubble";
 export default function MessageList({
   messages,
   onReply,
+  isGroup = false,
 }) {
   const containerRef = useRef(null);
   const bottomRef = useRef(null);
@@ -53,6 +54,7 @@ export default function MessageList({
           key={message._id}
           message={message}
           onReply={onReply}
+          isGroup={isGroup}
         />
       ))}
 

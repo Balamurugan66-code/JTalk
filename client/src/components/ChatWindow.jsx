@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import GroupChat from "./GroupChat";
 
 import { getMessages } from "../services/messageService";
 import { useSocket } from "../context/SocketContext";
@@ -12,6 +13,7 @@ export default function ChatWindow({
   user,
   refreshConversations,
   setSelectedConversation,
+  onGroupDeleted,
 }) {
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
@@ -19,20 +21,26 @@ export default function ChatWindow({
   const { socket, typingUsers, onlineUsers } = useSocket();
   const { user: currentUser } = useAuth();
 
+  const isGroup = user?.type === "group";
+
   const liveUser = useMemo(() => {
     if (!user) return null;
+
+    if (isGroup) return user;
 
     return {
       ...user,
       isOnline: onlineUsers.includes(user._id),
     };
-  }, [user, onlineUsers]);
+  }, [user, onlineUsers, isGroup]);
 
-  const isTyping = liveUser
-    ? !!typingUsers[liveUser._id]
-    : false;
+  const isTyping =
+    !isGroup && liveUser
+      ? !!typingUsers[liveUser._id]
+      : false;
 
   useEffect(() => {
+    if (isGroup) return;
     if (!liveUser || !currentUser) return;
 
     const handleReceiveMessage = (message) => {
@@ -113,9 +121,11 @@ export default function ChatWindow({
     liveUser?._id,
     currentUser?.id,
     refreshConversations,
+    isGroup,
   ]);
 
   useEffect(() => {
+    if (isGroup) return;
     if (!liveUser) return;
 
     async function loadChat() {
@@ -128,9 +138,10 @@ export default function ChatWindow({
     }
 
     loadChat();
-  }, [liveUser?._id]);
+  }, [liveUser?._id, isGroup]);
 
   useEffect(() => {
+    if (isGroup) return;
     if (!liveUser) return;
 
     setSelectedConversation((prev) =>
@@ -145,6 +156,7 @@ export default function ChatWindow({
     onlineUsers,
     liveUser?._id,
     setSelectedConversation,
+    isGroup,
   ]);
 
   const handleMessageSent = async (message) => {
@@ -170,6 +182,12 @@ export default function ChatWindow({
     );
   }
 
+  // 👥 Groups use their own component
+  if (isGroup) {
+    return <GroupChat group={liveUser} />;
+  }
+
+  // 👤 Existing direct chat remains unchanged
   return (
     <div className="flex-1 flex flex-col">
       <ChatHeader

@@ -13,14 +13,86 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: "JTalk",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+  params: async (req, file) => {
+    const isImage = file.mimetype.startsWith("image/");
+    const isVideo = file.mimetype.startsWith("video/");
+    const isAudio = file.mimetype.startsWith("audio/");
+
+    return {
+      folder: "JTalk",
+
+      // Images & Videos use their own resource types.
+      // Everything else (PDF, DOCX, ZIP, etc.) goes as "raw".
+      resource_type: isImage
+        ? "image"
+        : isVideo
+        ? "video"
+        : isAudio
+        ? "video"
+        : "raw",
+
+      public_id: `${Date.now()}-${file.originalname}`,
+    };
   },
 });
 
 export const upload = multer({
   storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB
+  },
+
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      // Images
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+
+      // Documents
+      "application/pdf",
+
+      "application/msword",
+
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+      "application/vnd.ms-powerpoint",
+
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+
+      "application/vnd.ms-excel",
+
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+      "text/plain",
+
+      "application/zip",
+
+      "application/x-zip-compressed",
+
+      // Audio
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+
+      // Video
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+    ];
+
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          `Unsupported file type: ${file.mimetype}`
+        )
+      );
+    }
+  },
 });
 
 export default cloudinary;

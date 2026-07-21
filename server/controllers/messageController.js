@@ -5,9 +5,22 @@ export const sendMessage = async (req, res) => {
   try {
     const { receiver, text, replyTo } = req.body;
 
-    const image = req.file ? req.file.path : "";
+    const attachment = req.file
+      ? {
+          url: req.file.path,
+          fileName: req.file.originalname,
+          fileType: req.file.mimetype,
+          size: req.file.size,
+        }
+      : null;
 
-    if (!text?.trim() && !image) {
+    // Backward compatibility
+    const image =
+      attachment && attachment.fileType.startsWith("image/")
+        ? attachment.url
+        : "";
+
+    if (!text?.trim() && !attachment) {
       return res.status(400).json({
         message: "Message cannot be empty.",
       });
@@ -20,6 +33,7 @@ export const sendMessage = async (req, res) => {
       receiver,
       text: text || "",
       image,
+      attachment,
       replyTo: replyTo || null,
       status: receiverSocketId ? "delivered" : "sent",
     });
@@ -147,6 +161,12 @@ export const deleteMessage = async (req, res) => {
 
     message.text = "";
     message.image = "";
+    message.attachment = {
+      url: "",
+      fileName: "",
+      fileType: "",
+      size: 0,
+    };
 
     await message.save();
 

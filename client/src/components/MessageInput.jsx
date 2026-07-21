@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import { sendMessage } from "../services/messageService";
+import {
+  sendMessage,
+  sendGroupMessage,
+} from "../services/messageService";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,9 +11,11 @@ export default function MessageInput({
   onMessageSent,
   replyMessage,
   onCancelReply,
+  chatType = "user",
+  groupId = null,
 }) {
   const [text, setText] = useState("");
-  const [image, setImage] = useState(null);
+  const [attachment, setAttachment] = useState(null);
 
   const fileInputRef = useRef(null);
 
@@ -23,6 +28,37 @@ export default function MessageInput({
   const handleTyping = (value) => {
     setText(value);
 
+    // ==========================
+    // GROUP CHAT
+    // ==========================
+    if (chatType === "group") {
+      if (!groupId) return;
+
+      if (!typingRef.current) {
+        typingRef.current = true;
+
+        socket.emit("typing_group", {
+          groupId,
+          sender: user,
+        });
+      }
+
+      clearTimeout(timeoutRef.current);
+
+      timeoutRef.current = setTimeout(() => {
+        typingRef.current = false;
+
+        socket.emit("stop_typing_group", {
+          groupId,
+        });
+      }, 1000);
+
+      return;
+    }
+
+    // ==========================
+    // DIRECT CHAT
+    // ==========================
     if (!selectedUser) return;
 
     if (!typingRef.current) {
@@ -47,43 +83,67 @@ export default function MessageInput({
   };
 
   const handleSend = async () => {
-    console.log("Sending", {
-  senderId: user?.id,
-  sender_Id: user?._id,
-  receiverId: selectedUser?._id,
-});
-    if (!selectedUser) return;
-    if (!text.trim() && !image) return;
+    if (!text.trim() && !attachment) return;
 
-    const message = await sendMessage(
-      selectedUser._id,
-      text,
-      replyMessage?._id,
-      image
-    );
+    let message;
+
+    // ==========================
+    // GROUP CHAT
+    // ==========================
+    if (chatType === "group") {
+      message = await sendGroupMessage(
+        groupId,
+        text,
+        attachment,
+        replyMessage?._id
+      );
+
+      socket.emit("send_group_message", {
+        groupId,
+        message,
+      });
+
+      socket.emit("stop_typing_group", {
+        groupId,
+      });
+    }
+
+    // ==========================
+    // DIRECT CHAT
+    // ==========================
+    else {
+      if (!selectedUser) return;
+
+      message = await sendMessage(
+        selectedUser._id,
+        text,
+        replyMessage?._id,
+        attachment
+      );
+
+      socket.emit("stop_typing", {
+        senderId: user.id,
+        receiverId: selectedUser._id,
+      });
+    }
 
     onMessageSent(message);
 
     clearTimeout(timeoutRef.current);
-
     typingRef.current = false;
 
-    socket.emit("stop_typing", {
-      senderId: user.id,
-      receiverId: selectedUser._id,
-    });
-
     setText("");
-    setImage(null);
+    setAttachment(null);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
 
-    if (onCancelReply) {
-      onCancelReply();
-    }
+    onCancelReply?.();
   };
+
+  const isImage =
+    attachment && attachment.type.startsWith("image/");
 
   return (
     <div className="bg-white border-t border-gray-300">
@@ -108,13 +168,29 @@ export default function MessageInput({
         </div>
       )}
 
-      {image && (
+      {attachment && (
         <div className="px-4 pt-3">
-          <img
-            src={URL.createObjectURL(image)}
-            alt="Preview"
-            className="w-28 h-28 object-cover rounded-lg border"
-          />
+          {isImage ? (
+            <img
+              src={URL.createObjectURL(attachment)}
+              alt="Preview"
+              className="w-28 h-28 object-cover rounded-lg border"
+            />
+          ) : (
+            <div className="border rounded-lg p-3 bg-gray-50 flex items-center gap-3">
+              <span className="text-3xl">📎</span>
+
+              <div className="overflow-hidden">
+                <p className="font-medium truncate">
+                  {attachment.name}
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  {(attachment.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -122,18 +198,18 @@ export default function MessageInput({
         <button
           onClick={() => fileInputRef.current.click()}
           className="text-2xl"
+          title="Attach file"
         >
-          📷
+          📎
         </button>
 
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
           hidden
           onChange={(e) => {
             if (e.target.files.length > 0) {
-              setImage(e.target.files[0]);
+              setAttachment(e.target.files[0]);
             }
           }}
         />
@@ -142,7 +218,9 @@ export default function MessageInput({
           value={text}
           onChange={(e) => handleTyping(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") handleSend();
+            if (e.key === "Enter") {
+              handleSend();
+            }
           }}
           placeholder="Type a message..."
           className="flex-1 border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"

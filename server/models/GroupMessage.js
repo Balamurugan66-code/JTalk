@@ -46,7 +46,7 @@ const attachmentSchema = new mongoose.Schema(
   }
 );
 
-const messageSchema = new mongoose.Schema(
+const groupMessageSchema = new mongoose.Schema(
   {
     sender: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,9 +54,9 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
 
-    receiver: {
+    group: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Conversation",
       required: true,
     },
 
@@ -80,14 +80,8 @@ const messageSchema = new mongoose.Schema(
 
     replyTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Message",
+      ref: "GroupMessage",
       default: null,
-    },
-
-    status: {
-      type: String,
-      enum: ["sent", "delivered", "seen"],
-      default: "sent",
     },
 
     deleted: {
@@ -116,4 +110,7 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Message", messageSchema);
+export default mongoose.model(
+  "GroupMessage",
+  groupMessageSchema
+);

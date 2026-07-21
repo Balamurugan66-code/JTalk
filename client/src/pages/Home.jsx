@@ -64,10 +64,14 @@ export default function Home() {
       />
 
       <ChatWindow
-        user={selectedConversation}
-        refreshConversations={loadConversations}
-        setSelectedConversation={setSelectedConversation}
-      />
+  user={selectedConversation}
+  refreshConversations={loadConversations}
+  setSelectedConversation={setSelectedConversation}
+  onGroupDeleted={() => {
+    setSelectedConversation(null);
+    loadConversations();
+  }}
+/>
     </div>
   );
 }

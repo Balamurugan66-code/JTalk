@@ -1,10 +1,14 @@
 import api from "./api";
 
+/* ===========================
+   Direct Messages
+=========================== */
+
 export const sendMessage = async (
   receiverId,
   text = "",
   replyTo = null,
-  image = null
+  attachment = null
 ) => {
   const formData = new FormData();
 
@@ -15,8 +19,8 @@ export const sendMessage = async (
     formData.append("replyTo", replyTo);
   }
 
-  if (image) {
-    formData.append("image", image);
+  if (attachment) {
+    formData.append("image", attachment);
   }
 
   const { data } = await api.post("/messages", formData, {
@@ -33,8 +37,58 @@ export const getMessages = async (userId) => {
   return data;
 };
 
+/* ===========================
+   Group Messages
+=========================== */
+
+export const getGroupMessages = async (groupId) => {
+  const { data } = await api.get(
+    `/groups/${groupId}/messages`
+  );
+
+  return data;
+};
+
+export const sendGroupMessage = async (
+  groupId,
+  text = "",
+  attachment = null,
+  replyTo = null
+) => {
+  const formData = new FormData();
+
+  formData.append("text", text);
+
+  if (replyTo) {
+    formData.append("replyTo", replyTo);
+  }
+
+  if (attachment) {
+    formData.append("image", attachment);
+  }
+
+  const { data } = await api.post(
+    `/groups/${groupId}/messages`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return data;
+};
+
+/* ===========================
+   Common
+=========================== */
+
 export const deleteMessage = async (messageId) => {
-  const { data } = await api.delete(`/messages/${messageId}`);
+  const { data } = await api.delete(
+    `/messages/${messageId}`
+  );
+
   return data;
 };
 
@@ -44,7 +98,9 @@ export const reactToMessage = async (
 ) => {
   const { data } = await api.post(
     `/messages/${messageId}/react`,
-    { emoji }
+    {
+      emoji,
+    }
   );
 
   return data;

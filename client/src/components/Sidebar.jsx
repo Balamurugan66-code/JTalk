@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import UserCard from "./UserCard";
 import ProfileModal from "./ProfileModal";
+import CreateGroupModal from "./CreateGroupModal";
 import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar({
@@ -11,6 +12,8 @@ export default function Sidebar({
   const { user: currentUser, logout } = useAuth();
 
   const [showProfile, setShowProfile] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] =
+    useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -26,7 +29,10 @@ export default function Sidebar({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
 
     return () =>
       document.removeEventListener(
@@ -49,7 +55,6 @@ export default function Sidebar({
     <>
       <div className="w-80 bg-white border-r border-gray-300 flex flex-col">
         <div className="p-5 shadow-sm border-b">
-
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-blue-600">
               JTalk
@@ -65,7 +70,6 @@ export default function Sidebar({
 
           {currentUser && (
             <div className="mt-5 flex items-center justify-between">
-
               <div
                 onClick={() => setShowProfile(true)}
                 className="flex items-center gap-3 cursor-pointer"
@@ -104,13 +108,10 @@ export default function Sidebar({
 
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50 overflow-hidden">
-
                     <button
                       onClick={() => {
                         setShowMenu(false);
-                        alert(
-                          "Group Chat coming next 🚀"
-                        );
+                        setShowCreateGroup(true);
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-gray-100 transition"
                     >
@@ -143,7 +144,6 @@ export default function Sidebar({
               className="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -169,6 +169,13 @@ export default function Sidebar({
       <ProfileModal
         open={showProfile}
         onClose={() => setShowProfile(false)}
+      />
+
+      <CreateGroupModal
+        open={showCreateGroup}
+        onClose={() =>
+          setShowCreateGroup(false)
+        }
       />
     </>
   );
